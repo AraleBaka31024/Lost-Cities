@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Lost Cities – Multiplayer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    :root{
+      --bg1:#38bdf8;
+      --bg2:#6366f1;
+      --panel:rgba(255,255,255,.92);
+      --text:#0f172a;
+      --muted:#475569;
+      --border:rgba(15,23,42,.10);
+      --shadow:0 20px 40px rgba(0,0,0,.18);
+      --shadow2:0 12px 24px rgba(0,0,0,.14);
+      --primary:#2563eb;
+      --primaryHover:#1d4ed8;
+      --secondary:#64748b;
+      --secondaryHover:#475569;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin:0;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(255,255,255,.35), rgba(255,255,255,0)),
+        radial-gradient(900px 520px at 80% 20%, rgba(255,255,255,.25), rgba(255,255,255,0)),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app{ max-width:1320px; margin:auto; padding:16px; }
+    .panel{
+      background:var(--panel);
+      border:1px solid rgba(255,255,255,.35);
+      backdrop-filter: blur(10px);
+      border-radius:22px;
+      padding:18px;
+      box-shadow: var(--shadow2);
+    }
+    .center{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:16px; }
+    .menu-card{ width:min(520px, 100%); text-align:center; }
+
+    button{
+      padding:12px 18px;
+      border-radius:18px;
+      border:none;
+      font-weight:900;
+      font-size:15px;
+      background:var(--primary);
+      color:white;
+      cursor:pointer;
+      box-shadow: 0 10px 18px rgba(0,0,0,.14);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+    button:hover{ background:var(--primaryHover); transform: translateY(-2px); box-shadow: 0 16px 26px rgba(0,0,0,.20); }
+    button:active{ transform: translateY(0); }
+    button.secondary{ background:var(--secondary); }
+    button.secondary:hover{ background:var(--secondaryHover); }
+    button:disabled{ background:#9ca3af; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    input{
+      padding:12px 14px;
+      border-radius:18px;
+      border:1px solid rgba(15,23,42,.12);
+      font-size:15px;
+      width:180px;
+      outline:none;
+      transition: box-shadow .12s ease, border-color .12s ease;
+      background: rgba(255,255,255,.9);
+    }
+    input:focus{ border-color: rgba(37,99,235,.55); box-shadow: 0 0 0 4px rgba(37,99,235,.18); }
+
+    .room-code{ font-size:28px; font-weight:900; letter-spacing:4px; margin:10px 0; }
+    .small{ font-size:12px; color:var(--muted); }
+
+    .board{ display:grid; grid-template-columns: 1fr 0.9fr 1fr; gap:12px; margin-top:12px; }
+    .hand{ display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .lane{ display:flex; gap:10px; align-items:flex-start; margin-top:8px; }
+    .lane-title{ width:70px; font-weight:900; font-size:12px; padding-top:6px; }
+    .lane-cards{ display:flex; flex-wrap:wrap; gap:8px; }
+
+    
+.card{
+  width:62px; height:88px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 10px 18px rgba(0,0,0,0.14);
+  user-select:none;
+  border:2px solid rgba(255,255,255,0.55);
+  position:relative; overflow:hidden;
+  background: transparent;
+}
+.card img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+  pointer-events:none;
+  -webkit-user-drag:none;
+  user-select:none;
+}
+.card.clickable{ cursor:pointer; transition: transform .12s ease, box-shadow .12s ease; }
+.card.clickable:hover{ transform: translateY(-3px); box-shadow:0 16px 26px rgba(0,0,0,0.20); }
+.card.selected{ outline:3px solid #2563eb; outline-offset:3px; }
+
+    .stacks{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:10px; }
+    .stack-card{ border:1px solid rgba(15,23,42,.10); border-radius:18px; padding:12px; background: rgba(255,255,255,.85); }
+    .stack-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; }
+    .stack-title{ display:flex; align-items:center; gap:8px; font-weight:900; font-size:13px; }
+    .dot{ width:10px; height:10px; border-radius:999px; border:1px solid rgba(15,23,42,0.10); }
+    .ghost{ width:62px; height:88px; border-radius:14px; border:1px dashed #cbd5e1; background:#f8fafc; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-weight:900; font-size:12px; }
+
+    .topbar{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; padding:10px 12px; background: rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.35); backdrop-filter: blur(10px); border-radius:18px; box-shadow: var(--shadow2); }
+    .pill{ padding:2px 10px; border-radius:999px; font-size:11px; background:#d1fae5; color:#166534; font-weight:900; }
+    .pill.draw{ background:#e0f2fe; color:#1d4ed8; }
+    .pill.wait{ background:#fee2e2; color:#b91c1c; }
+
+    @media (max-width:1100px){
+      .board{ grid-template-columns: 1fr; }
+      .stacks{ grid-template-columns: 1fr; }
+    }
+    /* Mobile optimizations */
+    .mobile-actions{ display:none; }
+
+    @media (max-width: 768px){
+      .topbar{
+        position: sticky;
+        top: 8px;
+        z-index: 50;
+      }
+    }
+    @media (max-width: 560px){
+      .app{ padding-bottom: 86px; }
+      .card{ width:54px; height:76px; font-size:28px; border-radius:12px; }
+      .hand{ gap:8px; }
+      .lane-title{ width:60px; }
+      .mobile-actions{
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        display: flex;
+        gap: 10px;
+        padding: 10px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.86);
+        border: 1px solid rgba(15,23,42,.10);
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow2);
+        z-index: 60;
+      }
+      .mobile-actions button{ width: 100%; padding: 12px 14px; border-radius: 16px; }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const SOCKET_URL =
+      (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+        ? "http://localhost:3000"
+        : "https://lost-cities-sv.onrender.com";
+
+    const socket = io(SOCKET_URL, { transports: ["websocket", "polling"] });
+
+    const COLORS = ["red", "green", "blue", "yellow", "white"];
+    const COLOR_LABELS = { red: "Đỏ", green: "Lục", blue: "Lam", yellow: "Vàng", white: "Trắng" };
+    const BG = { red: "#ef4444", green: "#22c55e", blue: "#3b82f6", yellow: "#f59e0b", white: "#e5e7eb" };
+    const TEXT = { red: "#fff", green: "#fff", blue: "#fff", yellow: "#fff", white: "#111827" };
+
+
+function getCardImg(card){
+  if (!card || card.hidden) return "cards/card_back.jpg";
+  const v = card.type === "wager" ? "x" : card.value;
+  return `cards/${card.color}_${v}.jpg`;
+}
+
+    
+function Card({ card, selectable, selected, onClick }) {
+  const src = getCardImg(card);
+  const title = card?.hidden ? "Ẩn" : (card?.type === "wager" ? "×" : card?.value);
+  return (
+    <div
+      className={"card" + (selectable ? " clickable" : "") + (selected ? " selected" : "")}
+      onClick={onClick}
+      title={title}
+    >
+      <img
+        src={src}
+        alt=""
+        draggable="false"
+        onError={(e) => { e.currentTarget.src = "cards/card_back.jpg"; }}
+      />
+    </div>
+  );
+}
+
+    function Stack({ color, pile, canDraw, onDraw }) {
+      const top = pile?.[pile.length - 1];
+      return (
+        <div className="stack-card">
+          <div className="stack-head">
+            <div className="stack-title">
+              <span className="dot" style={{ background: BG[color] }}></span>
+              {COLOR_LABELS[color]}
+            </div>
+            <div className="small"><b>{pile?.length || 0}</b> lá</div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+            {top ? <Card card={top} /> : <div className="ghost">trống</div>}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <button className="secondary" onClick={onDraw} disabled={!canDraw || !pile?.length}>Rút</button>
+          </div>
+        </div>
+      );
+    }
+
+    function Menu({ onCreate, onJoin, roomCode, waiting, statusText }) {
+      const [code, setCode] = React.useState("");
+
+      return (
+        <div className="center">
+          <div className="panel menu-card">
+            <h1>Lost Cities</h1>
+
+            <button onClick={onCreate} disabled={waiting}>🎮 Tạo phòng</button>
+
+            {roomCode && (
+              <>
+                <p style={{ marginTop: 16 }}>Mã phòng của bạn</p>
+                <div className="room-code">{roomCode}</div>
+                <p className="small">{statusText || "Đang chờ đối thủ tham gia..."}</p>
+              </>
+            )}
+
+            <hr style={{ margin: "22px 0" }} />
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <input
+                placeholder="Nhập mã phòng"
+                value={code}
+                onChange={e => setCode(e.target.value.toUpperCase())}
+              />
+              <button className="secondary" onClick={() => onJoin(code)} disabled={!code}>
+                Vào phòng
+              </button>
+            </div>
+</div>
+        </div>
+      );
+    }
+
+    function PlayerPanel({ title, player, isYou, selectedCardId, onSelect }) {
+      if (!player) return null;
+      return (
+        <div className="panel">
+          <h2 style={{ marginTop: 0 }}>{title}</h2>
+
+          <div className="small">Tuyến thám hiểm</div>
+          {COLORS.map(color => (
+            <div key={color} className="lane">
+              <div className="lane-title">{COLOR_LABELS[color]}</div>
+              <div className="lane-cards">
+                {(player.expeditions?.[color] || []).map((c, idx) => (
+                  <Card key={(c.id ?? idx) + "-" + color} card={c} />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div style={{ marginTop: 12, fontWeight: 900 }}>Bài trên tay</div>
+          <div className="hand">
+            {(player.hand || []).map((c, idx) => (
+              <Card
+                key={(c.id ?? idx) + "-hand"}
+                card={c.hidden ? { ...c, color: "white" } : c}
+                selectable={isYou && !c.hidden}
+                selected={isYou && !c.hidden && c.id === selectedCardId}
+                onClick={() => (isYou && !c.hidden) ? onSelect(c.id) : null}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function Game({ room, state, onLeave }) {
+      const [selectedCardId, setSelectedCardId] = React.useState(null);
+
+      const you = state.players?.[0];
+      const opp = state.players?.[1];
+
+      const isYourTurn = state.active === 0 && !state.finished;
+      const canPlayPhase = isYourTurn && state.phase === "play";
+      const canDrawPhase = isYourTurn && state.phase === "draw";
+
+      function emitAction(action) {
+        socket.emit("ACTION", { room, action });
+      }
+
+      function playSelected() {
+        if (!canPlayPhase || selectedCardId == null) return;
+        emitAction({ type: "play", cardId: selectedCardId });
+        setSelectedCardId(null);
+      }
+
+      function discardSelected() {
+        if (!canPlayPhase || selectedCardId == null) return;
+        emitAction({ type: "discard", cardId: selectedCardId });
+        setSelectedCardId(null);
+      }
+
+      function drawDeck() {
+        if (!canDrawPhase) return;
+        emitAction({ type: "deck" });
+      }
+
+      function drawDiscard(color) {
+        if (!canDrawPhase) return;
+        emitAction({ type: "discard", color });
+      }
+
+      let pillText = "";
+      let pillClass = "pill";
+      if (state.finished) { pillText = "Kết thúc"; pillClass += " wait"; }
+      else if (!isYourTurn) { pillText = "Lượt đối thủ"; pillClass += " wait"; }
+      else if (state.phase === "play") { pillText = "Pha: Đánh/Bỏ"; }
+      else { pillText = "Pha: Rút"; pillClass += " draw"; }
+
+      return (
+        <div className="app">
+          <div className="topbar">
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <div><b>Phòng:</b> {room}</div>
+              <span className={pillClass}>{pillText}</span>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <button className="secondary" onClick={onLeave}>Thoát</button>
+            </div>
+          </div>
+
+          <div className="mobile-actions">
+            <button onClick={playSelected} disabled={!canPlayPhase || selectedCardId == null}>Đánh</button>
+            <button className="secondary" onClick={discardSelected} disabled={!canPlayPhase || selectedCardId == null}>Bỏ</button>
+            <button onClick={drawDeck} disabled={!canDrawPhase || (state.deck?.length || 0) === 0}>Rút nọc</button>
+          </div>
+
+          <div className="board">
+            <PlayerPanel
+              title="Bạn"
+              player={you}
+              isYou={true}
+              selectedCardId={selectedCardId}
+              onSelect={(id) => setSelectedCardId(prev => prev === id ? null : id)}
+            />
+
+            <div className="panel">
+              <h2 style={{ marginTop: 0 }}>Giữa bàn</h2>
+              <div className="small">Nọc còn: <b>{state.deck?.length || 0}</b></div>
+
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+                <button onClick={playSelected} disabled={!canPlayPhase || selectedCardId == null}>Đánh</button>
+                <button className="secondary" onClick={discardSelected} disabled={!canPlayPhase || selectedCardId == null}>Bỏ</button>
+                <button onClick={drawDeck} disabled={!canDrawPhase || (state.deck?.length || 0) === 0}>Rút nọc</button>
+              </div>
+
+              <div style={{ marginTop: 12, fontWeight: 900 }}>Chồng bài bỏ</div>
+              <div className="stacks">
+                {COLORS.map(color => (
+                  <Stack
+                    key={color}
+                    color={color}
+                    pile={state.discard?.[color] || []}
+                    canDraw={canDrawPhase}
+                    onDraw={() => drawDiscard(color)}
+                  />
+                ))}
+              </div>
+
+              <div className="small" style={{ marginTop: 10 }}>
+                Tip: Nếu bạn vừa vào phòng mà chưa thấy bàn chơi → nghĩa là <b>phòng chưa đủ 2 người</b>.
+              </div>
+            </div>
+
+            <PlayerPanel
+              title="Đối thủ"
+              player={opp}
+              isYou={false}
+              selectedCardId={null}
+              onSelect={() => { }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [room, setRoom] = React.useState(null);
+      const [state, setState] = React.useState(null);
+      const [waiting, setWaiting] = React.useState(false);
+      const [statusText, setStatusText] = React.useState("");
+
+      React.useEffect(() => {
+        const onConnect = () => console.log("✅ Connected:", socket.id);
+        const onConnectError = (err) => console.error("❌ Socket error:", err.message);
+        const onRoomCreated = (r) => {
+          setRoom(r);
+          setWaiting(true);
+          setStatusText("Đang chờ đối thủ tham gia...");
+          setState(null);
+        };
+        const onState = (s) => {
+          setState(s);
+          setWaiting(false);
+          setStatusText("");
+        };
+
+        socket.on("connect", onConnect);
+        socket.on("connect_error", onConnectError);
+        socket.on("ROOM_CREATED", onRoomCreated);
+        socket.on("STATE", onState);
+
+        return () => {
+          socket.off("connect", onConnect);
+          socket.off("connect_error", onConnectError);
+          socket.off("ROOM_CREATED", onRoomCreated);
+          socket.off("STATE", onState);
+        };
+      }, []);
+
+      function createRoom() {
+        setStatusText("");
+        socket.emit("CREATE_ROOM");
+      }
+
+      function joinRoom(code) {
+        const clean = (code || "").trim().toUpperCase();
+        if (!clean) return;
+        setRoom(clean);
+        setWaiting(true);
+        setStatusText("Đang vào phòng... nếu phòng chưa đủ 2 người sẽ phải chờ.");
+        setState(null);
+        socket.emit("JOIN_ROOM", clean);
+      }
+
+      function leave() {
+        setRoom(null);
+        setState(null);
+        setWaiting(false);
+        setStatusText("");
+      }
+
+      if (!state) {
+        return (
+          <Menu
+            roomCode={room}
+            waiting={waiting}
+            statusText={statusText}
+            onCreate={createRoom}
+            onJoin={joinRoom}
+          />
+        );
+      }
+
+      return <Game room={room} state={state} onLeave={leave} />;
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+
+</html>

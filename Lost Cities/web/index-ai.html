@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lost Cities</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin:0; padding:0; color:#0f172a; background: radial-gradient(1000px 600px at 20% 10%, rgba(255,255,255,.35), rgba(255,255,255,0)), radial-gradient(900px 520px at 80% 20%, rgba(255,255,255,.25), rgba(255,255,255,0)), linear-gradient(135deg, #38bdf8, #6366f1); }
+    .app { max-width: 1320px; margin: 0 auto; padding: 16px; }
+    h1 { text-align:center; margin: 8px 0 12px; letter-spacing: .2px; }
+
+    .btn { padding: 8px 12px; border-radius: 12px; border: none; cursor: pointer; background: #2563eb; color: #fff; font-size: 14px; }
+    .btn:disabled { background:#9ca3af; cursor:not-allowed; }
+    .btn-secondary { background:#6b7280; }
+    .btn-ghost { background: #ffffffcc; color: #1d4ed8; border: 1px solid #bfdbfe; backdrop-filter: blur(6px); }
+
+    .top-bar { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; padding:10px 12px; background:#e5e7eb; border-radius:16px; }
+    .panel { background: rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.35); backdrop-filter: blur(10px); border-radius:16px; padding:10px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+    .panel h2 { font-size:15px; margin:0 0 8px; }
+    .small { font-size:12px; color:#4b5563; }
+    .highlight { font-weight:700; color:#b91c1c; }
+
+        .cardback {
+      width: 62px; height: 88px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 12px 22px rgba(0,0,0,0.16);
+      border: 1px solid rgba(15,23,42,0.15);
+      position: relative;
+    }
+    .cardback img { width:100%; height:100%; object-fit: cover; display:block; }
+    .back-count{
+      position:absolute; bottom:6px; right:6px;
+      font-size: 11px; font-weight: 900; color:#fff;
+      padding: 2px 6px; border-radius: 999px;
+      background: rgba(15,23,42,0.55);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    
+    .board { display:grid; grid-template-columns: 1fr 0.78fr 1fr; gap: 12px; align-items:start; }
+    .column { display:flex; flex-direction:column; gap:12px; }
+
+    .exp-area { display:flex; flex-direction:column; gap:10px; }
+    .lane { display:flex; gap:10px; align-items:flex-start; }
+    .lane-title { width: 76px; font-weight: 900; font-size: 12px; color:#0f172a; padding-top: 6px; }
+    .lane-cards { display:flex; gap:8px; flex-wrap:wrap; }
+
+    .hand { display:flex; flex-wrap:wrap; gap:10px; margin-top: 10px; }
+
+    
+    .center-zone { position: sticky; top: 10px; }
+    .stacks { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stack-card { padding:12px; border-radius:16px; border:1px solid #e5e7eb; background: rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.35); backdrop-filter: blur(10px); }
+    .stack-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .stack-title { display:flex; align-items:center; gap:8px; font-weight:900; font-size: 13px; color:#0f172a; }
+    .dot { width: 10px; height: 10px; border-radius: 999px; border:1px solid rgba(15,23,42,0.10); }
+    .stack-body { display:flex; justify-content:center; align-items:center; min-height: 104px; }
+    .ghost {
+      width: 62px; height: 88px;
+      border-radius: 12px;
+      border:1px dashed #cbd5e1;
+      background:#f8fafc;
+      display:flex; align-items:center; justify-content:center;
+      color:#94a3b8; font-weight:900; font-size:12px;
+    }
+
+    .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .phase-tag { padding:2px 10px; border-radius: 999px; font-size: 11px; background: #d1fae5; color:#166534; }
+    .phase-tag.draw { background: #e0f2fe; color:#1d4ed8; }
+    .phase-tag.bot-turn { background:#fee2e2; color:#b91c1c; }
+
+    
+    .overlay { position:fixed; inset:0; background:rgba(2,6,23,0.62); display:flex; justify-content:center; align-items:center; z-index:1000; padding: 10px; }
+    .overlay-card { max-width: 980px; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 22px; background: #fff; box-shadow: 0 18px 40px rgba(0,0,0,0.28); padding: 14px; }
+    .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-top: 10px; }
+    .tab { padding:8px 12px; border-radius:999px; border:1px solid #e5e7eb; background:#f9fafb; cursor:pointer; font-size:13px; font-weight:900; }
+    .tab.active { background:#2563eb; border-color:#2563eb; color:#fff; }
+    .rule-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px; align-items:center; justify-content:space-between; }
+    .checkbox { display:flex; gap:8px; align-items:center; font-size:12px; color:#0f172a; user-select:none; }
+    ul { margin: 6px 0 0 18px; }
+    li { margin: 6px 0; line-height: 1.35; }
+
+    @media (max-width: 1100px) {
+      .board { grid-template-columns: 1fr; }
+      .center-zone { position: static; }
+      .stacks { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .stacks { grid-template-columns: 1fr; }
+      .lane-title { width: 64px; }
+      .cardimg, .cardback, .ghost { width: 56px; height: 80px; border-radius: 12px; }
+    }
+  
+    
+    .hand-num-card {
+      width: 62px;
+      height: 88px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 900;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.14);
+      cursor: pointer;
+      user-select: none;
+      border: 2px solid rgba(255,255,255,0.55);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .hand-num-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 26px rgba(0,0,0,0.20);
+    }
+    .hand-num-card.selected {
+      outline: 3px solid #2563eb;
+      outline-offset: 3px;
+    }
+
+  
+    
+    .plain-card {
+      width: 62px;
+      height: 88px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.14);
+      user-select: none;
+      border: 2px solid rgba(255,255,255,0.55);
+      position: relative;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .plain-card::after { display: none; }
+    .plain-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+    .plain-card.hand-card { cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+    .plain-card.hand-card:hover { transform: translateY(-3px); box-shadow: 0 16px 26px rgba(0,0,0,0.20); }
+    .plain-card.selected { outline: 3px solid #2563eb; outline-offset: 3px; }
+
+  
+    
+    .bot-hidden-card {
+      width: 62px;
+      height: 88px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.14);
+      user-select: none;
+      border: 2px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bot-hidden-card img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+      pointer-events:none;
+      -webkit-user-drag:none;
+      user-select:none;
+    }
+
+.end-overlay { position: fixed; inset: 0; background: rgba(2,6,23,0.62); display:flex; align-items:center; justify-content:center; z-index: 1200; padding: 12px; }
+    .end-card { width: min(560px, 100%); background: rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.35); backdrop-filter: blur(10px); border-radius: 22px; box-shadow: 0 18px 40px rgba(0,0,0,0.28); padding: 16px; }
+    .end-title { font-size: 18px; font-weight: 900; margin: 0 0 6px; }
+    .end-sub { font-size: 13px; color:#374151; margin: 0 0 12px; }
+    .end-scores { display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
+    .score-pill { flex:1; min-width: 180px; background:#f3f4f6; border:1px solid #e5e7eb; border-radius: 16px; padding: 10px 12px; }
+    .score-pill b { font-size: 14px; }
+    .score-big { font-size: 28px; font-weight: 900; margin-top: 6px; }
+    .end-actions { display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; margin-top: 14px; }
+
+  
+    
+    .start-wrap { min-height: calc(100vh - 32px); display:flex; align-items:center; justify-content:center; }
+    .start-card { width: min(520px, 100%); background: rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.35); backdrop-filter: blur(10px); border-radius: 22px; box-shadow: 0 18px 40px rgba(0,0,0,0.14); padding: 18px; }
+    .start-title { font-size: 26px; font-weight: 900; margin: 0 0 6px; text-align:center; }
+    .start-sub { font-size: 13px; color:#4b5563; margin: 0 0 14px; text-align:center; }
+    .start-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top: 14px; }
+    .start-btn { min-width: 180px; padding: 12px 16px; border-radius: 16px; font-weight: 900; font-size: 15px; }
+
+  
+    
+    .start-card, .start-card * {
+      font-family: "Times New Roman", Times, serif !important;
+    }
+
+
+    /* Mobile optimizations (no impact on desktop) */
+    .mobile-actions{ display:none; }
+
+    @media (max-width: 768px){
+      .top-bar{
+        position: sticky;
+        top: 8px;
+        z-index: 50;
+      }
+    }
+    @media (max-width: 560px){
+      .app{ padding-bottom: 86px; }
+      .plain-card, .hand-num-card, .bot-hidden-card, .cardback, .ghost{
+        width: 54px !important;
+        height: 76px !important;
+        border-radius: 12px !important;
+        font-size: 28px !important;
+      }
+      h1{ font-size: 18px; margin: 10px 0 10px; }
+      .mobile-actions{
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        display: flex;
+        gap: 10px;
+        padding: 10px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.86);
+        border: 1px solid rgba(15,23,42,.10);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 12px 24px rgba(0,0,0,.14);
+        z-index: 60;
+      }
+      .mobile-actions button{ width: 100%; padding: 12px 14px; border-radius: 16px; }
+    }
+
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+  const { useState, useEffect } = React;
+
+  const COLORS = ["red", "green", "blue", "yellow", "white"];
+  const COLOR_LABELS = { red:"Đỏ", green:"Lục", blue:"Lam", yellow:"Vàng", white:"Trắng" };
+  const NUMBERS = [2,3,4,5,6,7,8,9,10];
+  const WAGERS_PER_COLOR = 3;
+  const CARDS_PER_PLAYER = 8;
+
+  function getCardImg(card) {
+    if (!card) return "cards/card_back.jpg";
+    const v = card.type === "wager" ? "x" : card.value;
+    return `cards/${card.color}_${v}.jpg`;
+  }
+
+
+  const LS_HIDE_RULES_KEY = "lostcities_hide_rules_v1";
+  function readHideRules() { try { return localStorage.getItem(LS_HIDE_RULES_KEY) === "1"; } catch { return false; } }
+  function writeHideRules(val) { try { localStorage.setItem(LS_HIDE_RULES_KEY, val ? "1" : "0"); } catch {} }
+  function createDeck() {
+    const deck = [];
+    let idCounter = 1;
+    COLORS.forEach(color => { for (let i=0;i<WAGERS_PER_COLOR;i++) deck.push({ id:idCounter++, color, type:"wager", value:0 }); });
+    COLORS.forEach(color => NUMBERS.forEach(value => deck.push({ id:idCounter++, color, type:"number", value })));
+    for (let i=deck.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+    return deck;
+  }
+
+  function createInitialState() {
+    const deck = createDeck();
+    const players = [
+      { id:0, name:"Người chơi 1 (Bạn)", hand:[], expeditions:{} },
+      { id:1, name:"Người chơi 2 (Bot)", hand:[], expeditions:{} }
+    ];
+    COLORS.forEach(c => { players[0].expeditions[c]=[]; players[1].expeditions[c]=[]; });
+    for (let r=0;r<CARDS_PER_PLAYER;r++) players.forEach(p => p.hand.push(deck.pop()));
+    const discardPiles = {}; COLORS.forEach(c => discardPiles[c]=[]);
+    return { players, deck, discardPiles, activePlayer:0, phase:"play", log:["Bắt đầu ván mới."], finished:false };
+  }
+
+  function scoreExpedition(cards) {
+    if (!cards || cards.length === 0) return 0;
+    let wagerCount=0, sumNumbers=0;
+    cards.forEach(c => { if (c.type === "wager") wagerCount++; if (c.type === "number") sumNumbers += c.value; });
+    return (sumNumbers - 20) * (1 + wagerCount);
+  }
+
+  function scorePlayer(player) {
+    let total=0; const detail={};
+    COLORS.forEach(color => { const s=scoreExpedition(player.expeditions[color]); total += s; detail[color]=s; });
+    return { total, detail };
+  }
+
+  function canPlayCardOnExpedition(card, expedition) {
+    if (card.type === "wager") return !expedition.some(c => c.type === "number");
+    const lastNum = [...expedition].reverse().find(c => c.type === "number");
+    return !lastNum || card.value >= lastNum.value;
+  }
+
+  
+
+  function deepClone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  function shuffleInPlace(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function collectSeenCardIds(state) {
+    const seen = new Set();
+    state.players[1].hand.forEach(c => seen.add(c.id));
+    state.players.forEach(p => {
+      COLORS.forEach(color => p.expeditions[color].forEach(c => seen.add(c.id)));
+    });
+    COLORS.forEach(color => state.discardPiles[color].forEach(c => seen.add(c.id)));
+    return seen;
+  }
+
+  function sampleHiddenStateForBot(realState) {
+    const s = deepClone(realState);
+
+    const seenIds = collectSeenCardIds(realState);
+
+    const unseen = [];
+    realState.deck.forEach(c => { if (!seenIds.has(c.id)) unseen.push(deepClone(c)); });
+    realState.players[0].hand.forEach(c => { if (!seenIds.has(c.id)) unseen.push(deepClone(c)); });
+
+    shuffleInPlace(unseen);
+
+    const p0HandSize = realState.players[0].hand.length;
+    s.players[0].hand = unseen.slice(0, p0HandSize);
+    s.deck = unseen.slice(p0HandSize);
+
+    s.players[1].hand = deepClone(realState.players[1].hand);
+
+    return s;
+  }
+
+  function applyPlayOrDiscard(s, playerId, action) {
+    const p = s.players[playerId];
+    const idx = p.hand.findIndex(c => c.id === action.cardId);
+    if (idx === -1) return false;
+    const card = p.hand[idx];
+
+    if (action.type === "play") {
+      const exp = p.expeditions[card.color];
+      if (!canPlayCardOnExpedition(card, exp)) return false;
+      p.hand.splice(idx, 1);
+      exp.push(card);
+      return true;
+    }
+
+    p.hand.splice(idx, 1);
+    s.discardPiles[card.color].push(card);
+    return true;
+  }
+
+  function applyDraw(s, playerId, draw) {
+    const p = s.players[playerId];
+    if (draw.type === "deck") {
+      if (s.deck.length === 0) return false;
+      p.hand.push(s.deck.pop());
+      return true;
+    }
+    const pile = s.discardPiles[draw.color];
+    if (!pile || pile.length === 0) return false;
+    p.hand.push(pile.pop());
+    return true;
+  }
+
+  function heuristicChoosePlayAction(state, playerId) {
+    const p = state.players[playerId];
+    const playableNumbers = [];
+    const playableWagers = [];
+    p.hand.forEach(card => {
+      const exp = p.expeditions[card.color];
+      if (canPlayCardOnExpedition(card, exp)) (card.type === "number" ? playableNumbers : playableWagers).push(card);
+    });
+
+    if (playableNumbers.length) {
+      const c = [...playableNumbers].sort((a,b)=>a.value-b.value)[0];
+      return { type:"play", cardId: c.id };
+    }
+    if (playableWagers.length) return { type:"play", cardId: playableWagers[0].id };
+
+    const numbers = p.hand.filter(c => c.type === "number");
+    if (numbers.length) {
+      const c = [...numbers].sort((a,b)=>b.value-a.value)[0];
+      return { type:"discard", cardId: c.id };
+    }
+    return { type:"discard", cardId: p.hand[0].id };
+  }
+
+  function heuristicChooseDrawAction(stateAfterPlay, playerId) {
+    const p = stateAfterPlay.players[playerId];
+    for (const color of COLORS) {
+      const pile = stateAfterPlay.discardPiles[color];
+      if (!pile.length) continue;
+      const top = pile[pile.length - 1];
+      if (canPlayCardOnExpedition(top, p.expeditions[color])) return { type:"discard", color };
+    }
+    return { type:"deck" };
+  }
+
+  function enumerateBotCandidates(realState) {
+    const bot = realState.players[1];
+    const candidates = [];
+    bot.hand.forEach(card => {
+      if (canPlayCardOnExpedition(card, bot.expeditions[card.color])) {
+        candidates.push({ type:"play", cardId: card.id });
+      }
+      candidates.push({ type:"discard", cardId: card.id });
+    });
+    return candidates;
+  }
+
+  function enumerateBotDrawOptions(stateAfterBotPlay) {
+    const opts = [];
+    if (stateAfterBotPlay.deck.length > 0) opts.push({ type:"deck" });
+
+    const bot = stateAfterBotPlay.players[1];
+    for (const color of COLORS) {
+      const pile = stateAfterBotPlay.discardPiles[color];
+      if (!pile.length) continue;
+      const top = pile[pile.length - 1];
+      if (canPlayCardOnExpedition(top, bot.expeditions[color])) opts.push({ type:"discard", color });
+    }
+
+    if (opts.length === 0) {
+      if (stateAfterBotPlay.deck.length > 0) opts.push({ type:"deck" });
+      for (const color of COLORS) {
+        const pile = stateAfterBotPlay.discardPiles[color];
+        if (pile.length) opts.push({ type:"discard", color });
+      }
+    }
+
+    if (opts.length === 0) opts.push({ type:"deck" });
+    return opts;
+  }
+
+  function simulateToEnd(state, maxHalfTurns = 160) {
+    const s = deepClone(state);
+    let steps = 0;
+
+    while (!s.finished && s.deck.length > 0 && steps < maxHalfTurns) {
+      const pid = s.activePlayer;
+      if (s.phase === "play") {
+        const act = heuristicChoosePlayAction(s, pid);
+        const ok = applyPlayOrDiscard(s, pid, act);
+        if (!ok) {
+          applyPlayOrDiscard(s, pid, { type:"discard", cardId: s.players[pid].hand[0].id });
+        }
+        s.phase = "draw";
+      } else if (s.phase === "draw") {
+        const draw = heuristicChooseDrawAction(s, pid);
+        const ok = applyDraw(s, pid, draw);
+        if (!ok) {
+          if (s.deck.length) applyDraw(s, pid, { type:"deck" });
+        }
+        if (s.deck.length === 0) {
+          s.finished = true; s.phase = "finished";
+          break;
+        }
+        s.activePlayer = 1 - pid;
+        s.phase = "play";
+      }
+      steps++;
+    }
+
+    if (s.deck.length === 0) { s.finished = true; s.phase = "finished"; }
+
+    const s0 = scorePlayer(s.players[0]).total;
+    const s1 = scorePlayer(s.players[1]).total;
+    return s1 - s0;
+  }
+
+  function chooseBotActionMC(realState, rolloutsPerCandidate = 40) {
+    const candidates = enumerateBotCandidates(realState);
+
+    let best = null;
+    let bestScore = -Infinity;
+
+    for (const act of candidates) {
+      const pub = deepClone(realState);
+      const okPub = applyPlayOrDiscard(pub, 1, act);
+      if (!okPub) continue;
+
+      const drawOptions = enumerateBotDrawOptions(pub);
+
+      for (const draw of drawOptions) {
+        let sum = 0;
+
+        for (let r = 0; r < rolloutsPerCandidate; r++) {
+          const s = sampleHiddenStateForBot(realState);
+
+          if (!applyPlayOrDiscard(s, 1, act)) { sum += -9999; continue; }
+          s.phase = "draw";
+          if (!applyDraw(s, 1, draw)) {
+            if (s.deck.length) applyDraw(s, 1, { type:"deck" });
+          }
+
+          if (s.deck.length === 0) {
+            s.finished = true; s.phase = "finished";
+            sum += scorePlayer(s.players[1]).total - scorePlayer(s.players[0]).total;
+            continue;
+          }
+          s.activePlayer = 0;
+          s.phase = "play";
+
+          sum += simulateToEnd(s);
+        }
+
+        const avg = sum / rolloutsPerCandidate;
+        if (avg > bestScore) {
+          bestScore = avg;
+          best = { act, draw };
+        }
+      }
+    }
+
+    if (!best) {
+      const act = heuristicChoosePlayAction(realState, 1);
+      const tmp = deepClone(realState);
+      applyPlayOrDiscard(tmp, 1, act);
+      const draw = heuristicChooseDrawAction(tmp, 1);
+      return { act, draw };
+    }
+
+    return best;
+  }
+
+
+  function cardToText(card) { return `[${COLOR_LABELS[card.color]} ${card.type === "wager" ? "Wager" : card.value}]`; }
+
+  
+  function applyBotTurn(prev) {
+    if (prev.finished || prev.activePlayer !== 1 || prev.phase !== "play") return prev;
+
+    const s = deepClone(prev);
+    const bot = s.players[1];
+    s.log = [...s.log];
+
+    const decision = chooseBotActionMC(prev, 35);
+    const action = decision.act;
+    const drawAction = decision.draw;
+
+    const cardIndex = bot.hand.findIndex(c => c.id === action.cardId);
+    if (cardIndex === -1) return prev;
+    const card = bot.hand[cardIndex];
+
+    if (action.type === "play") {
+      const exp = bot.expeditions[card.color];
+      if (!canPlayCardOnExpedition(card, exp)) {
+        action.type = "discard";
+      }
+    }
+
+    bot.hand.splice(cardIndex, 1);
+
+    if (action.type === "play") {
+      bot.expeditions[card.color].push(card);
+      s.log.unshift(`${bot.name} đánh 1 lá vào tuyến ${COLOR_LABELS[card.color]}.`);
+    } else {
+      s.discardPiles[card.color].push(card);
+      s.log.unshift(`${bot.name} bỏ 1 lá vào đống ${COLOR_LABELS[card.color]}.`);
+    }
+
+    s.phase = "draw";
+    if (s.deck.length === 0) { s.finished = true; s.phase = "finished"; s.log.unshift("Nọc hết. Ván kết thúc."); return s; }
+
+    if (drawAction.type === "deck") {
+      if (s.deck.length) { bot.hand.push(s.deck.pop()); s.log.unshift(`${bot.name} rút 1 lá từ nọc.`); }
+    } else {
+      const pile = s.discardPiles[drawAction.color];
+      if (pile && pile.length) {
+        bot.hand.push(pile.pop());
+        s.log.unshift(`${bot.name} rút 1 lá từ đống ${COLOR_LABELS[drawAction.color]}.`);
+      } else if (s.deck.length) {
+        bot.hand.push(s.deck.pop());
+        s.log.unshift(`${bot.name} rút 1 lá từ nọc.`);
+      }
+    }
+
+    if (s.deck.length === 0) { s.finished = true; s.phase = "finished"; s.log.unshift("Nọc hết. Ván kết thúc."); return s; }
+
+    s.activePlayer = 0;
+    s.phase = "play";
+    return s;
+  }
+
+
+  function RulesTabsContent({ tab }) {
+    if (tab === "overview") return (
+      <div>
+        <h2>Luật: Tổng quan</h2>
+        <div className="small">Chơi như Lost Cities: mỗi màu là một “tuyến thám hiểm”.</div>
+        <ul className="small">
+          <li>Mỗi lượt: <b>Đánh/Bỏ 1 lá</b> → <b>Rút 1 lá</b>.</li>
+          <li>Lá số phải đánh theo <b>tăng dần</b>.</li>
+          <li>Lá <b>Wager (×)</b> phải đánh <b>trước</b> mọi lá số.</li>
+        </ul>
+      </div>
+    );
+    if (tab === "turn") return (
+      <div>
+        <h2>Luật: Lượt chơi</h2>
+        <ul className="small">
+          <li><b>Đánh</b>: đưa lá vào tuyến cùng màu của bạn (mặt ngửa).</li>
+          <li><b>Bỏ</b>: đưa lá vào chồng bài bỏ cùng màu (ở giữa bàn, mặt ngửa).</li>
+          <li><b>Rút</b>: rút từ nọc hoặc từ chồng bài bỏ một màu (lấy lá trên cùng).</li>
+        </ul>
+      </div>
+    );
+    return (
+      <div>
+        <h2>Luật: Tính điểm</h2>
+        <ul className="small">
+          <li>Mỗi màu có bài: trừ <b>20</b>.</li>
+          <li>Điểm màu = (Tổng số − 20) × (1 + số Wager).</li>
+        </ul>
+      </div>
+    );
+  }
+
+  function RulesOverlay({ onClose }) {
+    const [tab, setTab] = useState("overview");
+    const [hideNext, setHideNext] = useState(readHideRules());
+    function toggle(v){ setHideNext(v); writeHideRules(v); }
+    return (
+      <div className="overlay" onMouseDown={onClose}>
+        <div className="overlay-card" onMouseDown={(e)=>e.stopPropagation()}>
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", gap:10, flexWrap:"wrap"}}>
+            <div style={{fontWeight:900, fontSize:16}}>Sổ tay luật</div>
+            <button className="btn-ghost" onClick={onClose}>Đóng</button>
+          </div>
+
+          <div className="tabs">
+            <button className={"tab "+(tab==="overview"?"active":"")} onClick={()=>setTab("overview")}>Tổng quan</button>
+            <button className={"tab "+(tab==="turn"?"active":"")} onClick={()=>setTab("turn")}>Lượt chơi</button>
+            <button className={"tab "+(tab==="score"?"active":"")} onClick={()=>setTab("score")}>Tính điểm</button>
+          </div>
+
+          <div style={{marginTop:10}}>
+            <RulesTabsContent tab={tab}/>
+          </div>
+
+          <div className="rule-actions">
+            <label className="checkbox">
+              <input type="checkbox" checked={hideNext} onChange={(e)=>toggle(e.target.checked)} />
+              Không hiện luật lần sau
+            </label>
+            <button className="btn" onClick={onClose}>Đóng</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  
+  function CardView({ card, selectable, selected, onClick }) {
+    const src = getCardImg(card);
+    return (
+      <div
+        className={"plain-card" + (selectable ? " hand-card" : "") + (selected ? " selected" : "")}
+        onClick={onClick}
+        title={`${COLOR_LABELS[card.color]} - ${card.type === "wager" ? "Wager" : card.value}`}
+      >
+        <img
+          src={src}
+          alt=""
+          draggable="false"
+          onError={(e) => (e.currentTarget.src = "cards/card_back.jpg")}
+        />
+      </div>
+    );
+  }
+  function CardBack() {
+    return (
+      <div className="bot-hidden-card"><img src="cards/card_back.jpg" alt="" draggable="false" /></div>
+    );
+  }
+
+  function StackView({ color, pile, canDraw, onDraw }) {
+    const top = pile[pile.length - 1];
+    const dotColor = ({red:"#ef4444", green:"#22c55e", blue:"#3b82f6", yellow:"#f59e0b", white:"#e5e7eb"})[color];
+    return (
+      <div className="stack-card">
+        <div className="stack-head">
+          <div className="stack-title">
+            <span className="dot" style={{background: dotColor}}></span>
+            {COLOR_LABELS[color]}
+          </div>
+          <div className="small"><b>{pile.length}</b> lá</div>
+        </div>
+
+        <div className="stack-body">
+          {pile.length === 0 ? (
+            <div className="ghost">trống</div>
+          ) : (
+            <CardView card={top} />
+          )}
+        </div>
+
+        <div style={{marginTop:10, display:"flex", justifyContent:"center"}}>
+          <button className="btn btn-secondary" onClick={onDraw} disabled={!canDraw || pile.length===0}>
+            Rút
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  
+  function PlayerColumn({ title, expeditions, hand, isHuman, selectedCardId, onSelect }) {
+    return (
+      <div className="panel">
+        <h2>{title}</h2>
+
+        <div className="exp-area">
+          {COLORS.map(color => (
+            <div key={color} className="lane">
+              <div className="lane-title">{COLOR_LABELS[color]}</div>
+              <div className="lane-cards">
+                {expeditions[color].map(c => (
+                  <CardView key={c.id} card={c} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 12, fontWeight: 900, fontSize: 13 }}>Bài trên tay</div>
+
+        {isHuman ? (
+          <>
+            <div className="small">Chọn 1 lá để <b>Đánh</b> hoặc <b>Bỏ</b>.</div>
+            <div className="hand">
+              {hand
+                .slice()
+                .sort((a, b) => {
+                  if (a.color !== b.color) return COLORS.indexOf(a.color) - COLORS.indexOf(b.color);
+                  if (a.type !== b.type) return a.type === "wager" ? -1 : 1;
+                  return (a.value ?? 0) - (b.value ?? 0);
+                })
+                .map(card => (
+                  <CardView
+                    key={card.id}
+                    card={card}
+                    selectable
+                    selected={card.id === selectedCardId}
+                    onClick={() => onSelect(card.id)}
+                  />
+                ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="small">Bài Bot (ẩn)</div>
+            <div className="hand">
+              {hand.map((_, i) => (
+                <div key={i} className="bot-hidden-card"><img src="cards/card_back.jpg" alt="" draggable="false" /></div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+
+
+  function EndgameOverlay({ winnerText, p0, p1, onNewGame, onClose }) {
+    return (
+      <div className="end-overlay" onMouseDown={onClose}>
+        <div className="end-card" onMouseDown={(e)=>e.stopPropagation()}>
+          <div className="end-title">{winnerText}</div>
+          <div className="end-sub">Tổng điểm cuối ván</div>
+
+          <div className="end-scores">
+            <div className="score-pill">
+              <b>Bạn</b>
+              <div className="score-big">{p0}</div>
+            </div>
+            <div className="score-pill">
+              <b>Bot</b>
+              <div className="score-big">{p1}</div>
+            </div>
+          </div>
+
+          <div className="end-actions">
+            <button className="btn btn-secondary" onClick={onClose}>Đóng</button>
+            <button className="btn" onClick={onNewGame}>Ván mới</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+  function CenterColumn({ game, humanTurn, onDrawDeck, onDrawDiscard }) {
+    const canDraw = humanTurn && game.phase === "draw" && !game.finished;
+    return (
+      <div className="column center-zone">
+        <div className="panel">
+          <h2>Giữa bàn</h2>
+          <div style={{display:"flex", gap:10, justifyContent:"space-between", alignItems:"center", flexWrap:"wrap"}}>
+            <div className="small">Nọc còn: <b>{game.deck.length}</b></div>
+<button className="btn" onClick={onDrawDeck} disabled={!canDraw || game.deck.length===0}>
+              Rút từ nọc
+            </button>
+          </div>
+          <div className="small" style={{marginTop:8}}>
+            {humanTurn ? (game.phase === "play" ? "Bạn đang ở pha: Đánh/Bỏ 1 lá." : "Bạn đang ở pha: Rút 1 lá.") : "Bot đang chơi..."}
+          </div>
+        </div>
+
+        <div className="panel">
+          <h2>Chồng bài bỏ</h2>
+          <div className="stacks">
+            {COLORS.map(color => (
+              <StackView
+                key={color}
+                color={color}
+                pile={game.discardPiles[color]}
+                canDraw={canDraw}
+                onDraw={() => onDrawDiscard(color)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+  function StartScreen({ onStart, onRules }) {
+    return (
+      <div className="app">
+        <div className="start-wrap">
+          <div className="start-card">
+            <div className="start-title">Lost Cities</div>
+            <div className="start-sub">Chơi với Bot • Luật cơ bản, lượt nhanh</div>
+            <div className="start-actions">
+              <button className="btn start-btn" onClick={onStart}>Lost Cities – Bắt đầu</button>
+              <button className="btn btn-secondary start-btn" onClick={onRules}>Lost Cities – Luật chơi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+  function Game() {
+    const [game, setGame] = useState(() => createInitialState());
+    const [selectedCardId, setSelectedCardId] = useState(null);
+    const [showEnd, setShowEnd] = useState(false);
+    const [endShownOnce, setEndShownOnce] = useState(false);
+
+    const activePlayer = game.players[game.activePlayer];
+    const humanTurn = game.activePlayer === 0 && !game.finished;
+
+    useEffect(() => {
+      if (!game.finished && game.activePlayer === 1 && game.phase === "play") {
+        const id = setTimeout(() => setGame(prev => applyBotTurn(prev)), 350);
+        return () => clearTimeout(id);
+      }
+    }, [game.activePlayer, game.phase, game.finished]);
+
+
+    useEffect(() => {
+      if (game.finished && !endShownOnce) {
+        setShowEnd(true);
+        setEndShownOnce(true);
+      }
+      if (!game.finished) {
+        setShowEnd(false);
+        setEndShownOnce(false);
+      }
+    }, [game.finished]);
+
+
+    function restart() { setGame(createInitialState()); setSelectedCardId(null); setShowEnd(false); setEndShownOnce(false); }
+
+    function handleSelectCard(cardId) {
+      if (!humanTurn || game.phase !== "play") return;
+      setSelectedCardId(prev => (prev === cardId ? null : cardId));
+    }
+
+    function playSelected() {
+      if (!humanTurn || game.phase !== "play" || selectedCardId == null) return;
+      setGame(prev => {
+        if (prev.finished || prev.activePlayer !== 0 || prev.phase !== "play") return prev;
+        const s = JSON.parse(JSON.stringify(prev));
+        const player = s.players[0]; s.log = [...s.log];
+
+        const idx = player.hand.findIndex(c => c.id === selectedCardId);
+        if (idx === -1) return prev;
+        const card = player.hand[idx];
+        const expedition = player.expeditions[card.color];
+
+        if (card.type === "wager") {
+          if (expedition.some(c => c.type === "number")) { alert("Không thể đánh Wager sau khi đã có bài số."); return prev; }
+        } else {
+          const lastNumber = [...expedition].reverse().find(c => c.type === "number");
+          if (lastNumber && card.value < lastNumber.value) { alert(`Lá số phải ≥ ${lastNumber.value}.`); return prev; }
+        }
+
+        player.hand.splice(idx, 1);
+        expedition.push(card);
+        s.log.unshift(`${player.name} đánh ${cardToText(card)} vào tuyến ${COLOR_LABELS[card.color]}.`);
+        s.phase = "draw";
+        return s;
+      });
+      setSelectedCardId(null);
+    }
+
+    function discardSelected() {
+      if (!humanTurn || game.phase !== "play" || selectedCardId == null) return;
+      setGame(prev => {
+        if (prev.finished || prev.activePlayer !== 0 || prev.phase !== "play") return prev;
+        const s = JSON.parse(JSON.stringify(prev));
+        const player = s.players[0]; s.log = [...s.log];
+
+        const idx = player.hand.findIndex(c => c.id === selectedCardId);
+        if (idx === -1) return prev;
+        const card = player.hand[idx];
+
+        player.hand.splice(idx, 1);
+        s.discardPiles[card.color].push(card);
+        s.log.unshift(`${player.name} bỏ ${cardToText(card)} vào đống ${COLOR_LABELS[card.color]}.`);
+        s.phase = "draw";
+        return s;
+      });
+      setSelectedCardId(null);
+    }
+
+    function drawFromDeck() {
+      if (!humanTurn || game.phase !== "draw") { alert("Bạn phải đánh/bỏ 1 lá trước khi rút."); return; }
+      setGame(prev => {
+        if (prev.finished || prev.activePlayer !== 0 || prev.phase !== "draw") return prev;
+        if (prev.deck.length === 0) { alert("Nọc đã hết."); return prev; }
+
+        const s = JSON.parse(JSON.stringify(prev));
+        const player = s.players[0]; s.log = [...s.log];
+        player.hand.push(s.deck.pop());
+        s.log.unshift(`${player.name} rút 1 lá từ nọc.`);
+
+        if (s.deck.length === 0) { s.finished=true; s.phase="finished"; s.log.unshift("Nọc hết. Ván kết thúc."); return s; }
+        s.activePlayer = 1; s.phase = "play"; return s;
+      });
+    }
+
+    function drawFromDiscard(color) {
+      if (!humanTurn || game.phase !== "draw") { alert("Bạn phải đánh/bỏ 1 lá trước khi rút."); return; }
+      setGame(prev => {
+        if (prev.finished || prev.activePlayer !== 0 || prev.phase !== "draw") return prev;
+        if (!prev.discardPiles[color].length) { alert("Đống này đang rỗng."); return prev; }
+
+        const s = JSON.parse(JSON.stringify(prev));
+        const player = s.players[0]; s.log = [...s.log];
+        player.hand.push(s.discardPiles[color].pop());
+        s.log.unshift(`${player.name} rút 1 lá từ đống ${COLOR_LABELS[color]}.`);
+
+        if (s.deck.length === 0) { s.finished=true; s.phase="finished"; s.log.unshift("Nọc hết. Ván kết thúc."); return s; }
+        s.activePlayer = 1; s.phase = "play"; return s;
+      });
+    }
+
+    const s0 = scorePlayer(game.players[0]);
+    const s1 = scorePlayer(game.players[1]);
+
+    let phaseLabel = "";
+    let phaseClass = "phase-tag";
+    if (game.finished) phaseLabel = "Kết thúc";
+    else if (game.activePlayer === 1) { phaseLabel = "Lượt Bot"; phaseClass += " bot-turn"; }
+    else if (game.phase === "play") phaseLabel = "Pha: Đánh/Bỏ";
+    else { phaseLabel = "Pha: Rút"; phaseClass += " draw"; }
+
+    let endText = "";
+    if (game.finished) endText = s0.total > s1.total ? "Bạn thắng!" : (s1.total > s0.total ? "Bot thắng!" : "Hòa!");
+    const winnerText = game.finished ? `${endText} (Bạn ${s0.total} – Bot ${s1.total})` : "";
+
+    return (
+      <div className="app">
+        {showEnd && game.finished && (
+          <EndgameOverlay
+            winnerText={winnerText}
+            p0={s0.total}
+            p1={s1.total}
+            onNewGame={restart}
+            onClose={() => setShowEnd(false)}
+          />
+        )}
+
+        <h1>Expedition Duel</h1>
+
+        <div className="top-bar">
+          <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" }}>
+            <span>{game.finished ? "Ván đã kết thúc." : `Lượt của: ${activePlayer.name}`}</span>
+            <span className={phaseClass}>{phaseLabel}</span>
+          </div>
+          <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+            <div className="small"><b>Bạn</b>: <span className="highlight">{s0.total}</span> &nbsp;|&nbsp; <b>Bot</b>: <span className="highlight">{s1.total}</span></div>
+            <button className="btn btn-secondary" onClick={restart}>Ván mới</button>
+          </div>
+        </div>
+
+        <div className="mobile-actions">
+          <button className="btn" onClick={playSelected} disabled={!humanTurn || game.phase!=="play" || selectedCardId==null}>Đánh</button>
+          <button className="btn btn-secondary" onClick={discardSelected} disabled={!humanTurn || game.phase!=="play" || selectedCardId==null}>Bỏ</button>
+          <button className="btn" onClick={drawFromDeck} disabled={!humanTurn || game.phase!=="draw" || game.deck.length===0}>Rút nọc</button>
+        </div>
+
+        <div className="board">
+          <div className="column">
+            <PlayerColumn
+              title="Bên trái: Bạn"
+              expeditions={game.players[0].expeditions}
+              hand={game.players[0].hand}
+              isHuman={true}
+              selectedCardId={selectedCardId}
+              onSelect={handleSelectCard}
+            />
+            <div className="panel">
+              <h2>Hành động</h2>
+              <div className="small">Chọn 1 lá trên tay rồi bấm Đánh hoặc Bỏ.</div>
+              <div className="actions">
+                <button className="btn" onClick={playSelected} disabled={!humanTurn || game.phase!=="play" || selectedCardId==null}>Đánh</button>
+                <button className="btn btn-secondary" onClick={discardSelected} disabled={!humanTurn || game.phase!=="play" || selectedCardId==null}>Bỏ</button>
+              </div>
+              {game.finished && (<div style={{marginTop:10, fontWeight:900}}>{endText}</div>)}
+            </div>
+          </div>
+
+          <CenterColumn
+            game={game}
+            humanTurn={humanTurn}
+            onDrawDeck={drawFromDeck}
+            onDrawDiscard={drawFromDiscard}
+/>
+
+          <div className="column">
+            <PlayerColumn
+              title="Bên phải: Bot"
+              expeditions={game.players[1].expeditions}
+              hand={game.players[1].hand}
+              isHuman={false}
+              selectedCardId={null}
+              onSelect={() => {}}
+            />
+            <div className="panel">
+              <h2>Lịch sử</h2>
+              <div className="small">Các hành động mới nhất:</div>
+              <div style={{maxHeight: 260, overflowY:"auto", marginTop: 8}}>
+                {game.log.map((entry, idx) => (
+                  <div key={idx} className="small" style={{marginBottom:4}}>• {entry}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  
+  function App() { return <Game />; }
+
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

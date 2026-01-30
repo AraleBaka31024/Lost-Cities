@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lost Cities</title>
+  <style>
+    :root{
+      --bg1:#38bdf8;
+      --bg2:#6366f1;
+      --card:#ffffff;
+      --panel:rgba(255,255,255,.92);
+      --text:#0f172a;
+      --muted:#475569;
+      --primary:#2563eb;
+      --primaryHover:#1d4ed8;
+      --secondary:#64748b;
+      --secondaryHover:#475569;
+      --shadow:0 20px 40px rgba(0,0,0,.18);
+      --shadow2:0 12px 24px rgba(0,0,0,.14);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(255,255,255,.35), rgba(255,255,255,0)),
+        radial-gradient(900px 520px at 80% 20%, rgba(255,255,255,.25), rgba(255,255,255,0)),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      padding:16px;
+      color:var(--text);
+    }
+    .container{
+      width:min(520px,100%);
+      background:var(--panel);
+      border:1px solid rgba(255,255,255,.35);
+      backdrop-filter: blur(10px);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      padding:32px 28px;
+      display:flex;
+      flex-direction:column;
+      gap:22px;
+      align-items:center;
+    }
+    h1{
+      margin:0;
+      font-size:44px;
+      font-weight:900;
+      letter-spacing:.5px;
+      line-height:1;
+    }
+    .actions{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .btn{
+      width:100%;
+      padding:16px 18px;
+      border-radius:20px;
+      border:none;
+      cursor:pointer;
+      font-size:16px;
+      font-weight:900;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      box-shadow:var(--shadow2);
+      transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+    .btn:hover{
+      transform:translateY(-2px);
+      box-shadow:0 18px 30px rgba(0,0,0,.22);
+    }
+    .btn:active{ transform:translateY(0); }
+    .btn.primary{ background:var(--primary); }
+    .btn.primary:hover{ background:var(--primaryHover); }
+    .btn.secondary{ background:var(--secondary); }
+    .btn.secondary:hover{ background:var(--secondaryHover); }
+    .btn.ghost{
+      background: rgba(255,255,255,.68);
+      color: var(--text);
+      border: 1px solid rgba(15,23,42,.10);
+      box-shadow: none;
+    }
+    .btn.ghost:hover{
+      background: rgba(255,255,255,.86);
+      box-shadow: 0 14px 22px rgba(0,0,0,.12);
+    }
+    .left{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .icon{
+      width:40px;
+      height:40px;
+      border-radius:16px;
+      background:rgba(255,255,255,.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:20px;
+    }
+    .btn.ghost .icon{
+      background: rgba(37,99,235,.12);
+    }
+    .text{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+      text-align:left;
+    }
+    .text b{ font-size:16px; }
+    .text span{
+      font-size:12px;
+      font-weight:700;
+      opacity:.9;
+      color: rgba(255,255,255,.9);
+    }
+    .btn.ghost .text span{
+      color: var(--muted);
+      opacity:1;
+    }
+    .arrow{
+      font-size:22px;
+      font-weight:900;
+      opacity:.9;
+      user-select:none;
+    }
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(2,6,23,.62);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:12px;
+      z-index:1000;
+    }
+    .overlay.show{ display:flex; }
+    .modal{
+      width: min(720px, 100%);
+      max-height: 88vh;
+      overflow:auto;
+      background: rgba(255,255,255,.94);
+      border:1px solid rgba(255,255,255,.40);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .modal-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      padding: 6px 6px 10px;
+    }
+    .modal-title{
+      font-weight: 900;
+      font-size: 18px;
+      margin:0;
+    }
+    .modal-close{
+      padding:10px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(15,23,42,.10);
+      background: rgba(255,255,255,.75);
+      cursor:pointer;
+      font-weight: 900;
+    }
+    .modal-body{
+      padding: 0 6px 8px;
+      color: var(--text);
+    }
+    .muted{ color: var(--muted); font-size: 13px; line-height: 1.45; }
+    ul{ margin: 8px 0 0 18px; }
+    li{ margin: 6px 0; line-height: 1.35; }
+    .rule-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .rule-card{
+      background: rgba(255,255,255,.85);
+      border: 1px solid rgba(15,23,42,.10);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: var(--shadow2);
+    }
+    .rule-card h3{ margin:0 0 6px; font-size: 14px; }
+    @media (max-width: 640px){
+      h1{ font-size: 40px; }
+      .rule-grid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Lost Cities</h1>
+
+    <div class="actions">
+      <button class="btn primary" onclick="location.href='index-ai.html'">
+        <span class="left">
+          <span class="icon">🤖</span>
+          <span class="text">
+            <b>Chơi với máy</b>
+            <span>Solo • Bot</span>
+          </span>
+        </span>
+        <span class="arrow">›</span>
+      </button>
+
+      <button class="btn secondary" onclick="location.href='index-multiplayer.html'">
+        <span class="left">
+          <span class="icon">🎮</span>
+          <span class="text">
+            <b>Chơi với người</b>
+            <span>Online • Tạo / Vào phòng</span>
+          </span>
+        </span>
+        <span class="arrow">›</span>
+      </button>
+
+      <button class="btn ghost" id="rulesBtn" type="button">
+        <span class="left">
+          <span class="icon">📖</span>
+          <span class="text">
+            <b>Đọc luật chơi</b>
+            <span>Luật cơ bản • Tính điểm</span>
+          </span>
+        </span>
+        <span class="arrow">›</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="overlay" id="rulesOverlay" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <p class="modal-title" id="rulesTitle">Luật chơi Lost Cities</p>
+          <div class="muted">Mỗi lượt: đánh hoặc bỏ 1 lá, sau đó rút 1 lá.</div>
+        </div>
+        <button class="modal-close" id="rulesClose" type="button">Đóng</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="rule-grid">
+          <div class="rule-card">
+            <h3>1) Đánh bài</h3>
+            <div class="muted">
+              Mỗi màu là một tuyến thám hiểm của riêng bạn.
+              Lá số phải đặt theo thứ tự tăng dần. Lá “×” phải đặt trước mọi lá số của màu đó.
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <h3>2) Bỏ bài</h3>
+            <div class="muted">
+              Nếu không muốn đánh vào tuyến, bạn có thể bỏ vào chồng bài bỏ cùng màu ở giữa bàn.
+              Đối thủ có thể rút lá trên cùng từ chồng này.
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <h3>3) Rút bài</h3>
+            <div class="muted">
+              Sau khi đánh/bỏ, bạn phải rút 1 lá:
+              rút từ nọc hoặc rút lá trên cùng của một chồng bài bỏ.
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <h3>4) Tính điểm</h3>
+            <div class="muted">
+              Với mỗi màu có bài: trừ 20 điểm.
+              Điểm màu = (tổng số − 20) × (1 + số lá “×”).
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-card" style="margin-top:10">
+          <h3>Mẹo</h3>
+          <ul class="muted">
+            <li>Đánh “×” sớm nếu bạn định đầu tư vào màu đó.</li>
+            <li>Đừng mở quá nhiều màu nếu bài số thấp.</li>
+            <li>Quan sát chồng bài bỏ để rút đúng thời điểm.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById("rulesOverlay");
+    const openBtn = document.getElementById("rulesBtn");
+    const closeBtn = document.getElementById("rulesClose");
+
+    function openRules(){
+      overlay.classList.add("show");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeRules(){
+      overlay.classList.remove("show");
+      document.body.style.overflow = "";
+    }
+
+    openBtn.addEventListener("click", openRules);
+    closeBtn.addEventListener("click", closeRules);
+    overlay.addEventListener("mousedown", (e) => {
+      if (e.target === overlay) closeRules();
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeRules();
+    });
+  </script>
+</body>
+</html>
